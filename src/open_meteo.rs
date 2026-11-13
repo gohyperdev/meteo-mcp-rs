@@ -72,7 +72,7 @@ impl OpenMeteoClient {
     pub async fn geocode(&self, city: &str) -> Result<GeoLocation> {
         let trimmed = city.trim();
         if trimmed.is_empty() {
-            return Err(anyhow!("Nazwa miasta nie może być pusta"));
+            return Err(anyhow!("City name must not be empty"));
         }
 
         let resp: GeoResponse = self
@@ -86,16 +86,16 @@ impl OpenMeteoClient {
             ])
             .send()
             .await
-            .context("Błąd połączenia z Open-Meteo Geocoding API")?
+            .context("Failed to connect to the Open-Meteo Geocoding API")?
             .error_for_status()
-            .context("Open-Meteo Geocoding API zwróciło błąd HTTP")?
+            .context("Open-Meteo Geocoding API returned an HTTP error")?
             .json()
             .await
-            .context("Niepoprawny JSON z Open-Meteo Geocoding API")?;
+            .context("Invalid JSON from the Open-Meteo Geocoding API")?;
 
         resp.results
             .and_then(|mut r| r.drain(..).next())
-            .ok_or_else(|| anyhow!("Nie znaleziono lokalizacji: {trimmed}"))
+            .ok_or_else(|| anyhow!("Location not found: {trimmed}"))
     }
 
     pub async fn get_full_report(&self, city: &str) -> Result<WeatherReport> {
@@ -143,12 +143,12 @@ impl OpenMeteoClient {
         let (weather_res, aqi_res) = tokio::join!(weather_req, aqi_req);
 
         let weather_json: serde_json::Value = weather_res
-            .context("Błąd połączenia z Open-Meteo Forecast API")?
+            .context("Failed to connect to the Open-Meteo Forecast API")?
             .error_for_status()
-            .context("Open-Meteo Forecast API zwróciło błąd HTTP")?
+            .context("Open-Meteo Forecast API returned an HTTP error")?
             .json()
             .await
-            .context("Niepoprawny JSON z Open-Meteo Forecast API")?;
+            .context("Invalid JSON from the Open-Meteo Forecast API")?;
 
         // Air quality API is non-critical in edge coordinates (e.g. oceans); degrade gracefully.
         let air_quality = match aqi_res {

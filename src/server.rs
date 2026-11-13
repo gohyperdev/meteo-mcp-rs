@@ -23,17 +23,17 @@ pub struct MeteoServer {
 
 #[derive(Debug, Deserialize, JsonSchema)]
 pub struct WeatherQuery {
-    #[schemars(description = "Nazwa miasta, np. Warszawa, Kraków, Gdańsk")]
+    #[schemars(description = "City name, e.g. Warsaw, Krakow, Gdansk")]
     pub city: String,
 }
 
 #[derive(Debug, Deserialize, JsonSchema)]
 pub struct CoordsQuery {
-    #[schemars(description = "Nazwa lokalizacji wyświetlana w panelu UI")]
+    #[schemars(description = "Location name displayed in the UI panel")]
     pub name: String,
-    #[schemars(description = "Szerokość geograficzna (latitude)")]
+    #[schemars(description = "Latitude")]
     pub latitude: f64,
-    #[schemars(description = "Długość geograficzna (longitude)")]
+    #[schemars(description = "Longitude")]
     pub longitude: f64,
 }
 
@@ -55,8 +55,9 @@ fn report_tool_result(
     report: &WeatherReport,
     include_ui_uri: bool,
 ) -> Result<CallToolResult, McpError> {
-    let report_json = serde_json::to_value(report)
-        .map_err(|e| McpError::internal_error(format!("Błąd serializacji raportu: {e}"), None))?;
+    let report_json = serde_json::to_value(report).map_err(|e| {
+        McpError::internal_error(format!("Failed to serialize weather report: {e}"), None)
+    })?;
 
     let mut meta_map = serde_json::Map::new();
     if include_ui_uri {
@@ -86,7 +87,7 @@ impl MeteoServer {
         if let Some(route) = tool_router.map.get_mut("get_weather_dashboard") {
             route.attr.meta = Some(ui_tool_meta(&["model", "app"]));
             route.attr.annotations = Some(
-                ToolAnnotations::with_title("Prognoza pogody i jakości powietrza")
+                ToolAnnotations::with_title("Weather & Air Quality Forecast")
                     .read_only(true)
                     .idempotent(true)
                     .open_world(true),
@@ -95,7 +96,7 @@ impl MeteoServer {
         if let Some(route) = tool_router.map.get_mut("refresh_by_coords") {
             route.attr.meta = Some(ui_tool_meta(&["app"]));
             route.attr.annotations = Some(
-                ToolAnnotations::with_title("Odśwież pogodę po współrzędnych")
+                ToolAnnotations::with_title("Refresh Weather by Coordinates")
                     .read_only(true)
                     .idempotent(true)
                     .open_world(true),
@@ -110,7 +111,7 @@ impl MeteoServer {
 
     #[tool(
         name = "get_weather_dashboard",
-        description = "Pobiera pełną prognozę pogody, jakość powietrza (AQI) oraz uruchamia interaktywny panel pogodowy MCP App."
+        description = "Fetches the full weather forecast with air quality (AQI) and opens the interactive MCP App weather dashboard."
     )]
     async fn get_weather_dashboard(
         &self,
@@ -127,7 +128,7 @@ impl MeteoServer {
         let aqi = &report.air_quality["european_aqi"];
 
         let summary = format!(
-            "Aktualna pogoda dla {}: {}°C, wiatr {} km/h, indeks jakości powietrza EU AQI: {}. Otwarto interaktywny wykres prognozy 7-dniowej i godzinowej.",
+            "Current weather for {}: {}°C, wind {} km/h, EU Air Quality Index: {}. Opened the interactive hourly and 7-day forecast dashboard.",
             report.location.name, temp, wind, aqi
         );
 
@@ -136,7 +137,7 @@ impl MeteoServer {
 
     #[tool(
         name = "refresh_by_coords",
-        description = "Odświeża dane pogodowe dla zadanych współrzędnych (wywoływane bezpośrednio z UI aplikacji)."
+        description = "Refreshes weather data for the given coordinates (invoked directly by the app UI)."
     )]
     async fn refresh_by_coords(
         &self,
@@ -157,7 +158,7 @@ impl MeteoServer {
             .map_err(|e| McpError::internal_error(e.to_string(), None))?;
 
         let summary = format!(
-            "Zaktualizowano dane pogodowe dla {} ({:.2}, {:.2}).",
+            "Weather data refreshed for {} ({:.2}, {:.2}).",
             report.location.name, report.location.latitude, report.location.longitude
         );
 
@@ -186,7 +187,7 @@ impl ServerHandler for MeteoServer {
             env!("CARGO_PKG_VERSION"),
         ))
         .with_instructions(
-            "Serwer pogodowy Open-Meteo z interaktywnym UI (MCP App). Użyj get_weather_dashboard dla zapytań o pogodę.",
+            "Open-Meteo weather server with an interactive UI (MCP App). Use get_weather_dashboard for weather queries.",
         )
     }
 
@@ -197,7 +198,7 @@ impl ServerHandler for MeteoServer {
     ) -> Result<ListResourcesResult, McpError> {
         let resource = Resource::new(UI_RESOURCE_URI, "Meteo Interactive Dashboard")
             .with_title("Meteo Interactive Dashboard")
-            .with_description("Interaktywny widżet prognozy pogody i jakości powietrza")
+            .with_description("Interactive weather forecast and air quality widget")
             .with_mime_type(UI_MIME_TYPE)
             .with_size(DASHBOARD_HTML.len() as u64);
 
@@ -220,7 +221,7 @@ impl ServerHandler for MeteoServer {
             Ok(ReadResourceResult::new(vec![contents]).into())
         } else {
             Err(McpError::resource_not_found(
-                format!("Nieznany zasób: {}", request.uri),
+                format!("Unknown resource: {}", request.uri),
                 None,
             ))
         }
