@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>meteo-mcp-rs — Rust MCP server with an interactive weather dashboard</title>
+  <meta name="description" content="Live demo of meteo-mcp-rs: a Rust-native Open-Meteo MCP server with an interactive MCP App dashboard (weather + EU air quality)." />
+  <style>
+    :root {
+      --bg: #f6f7f9; --fg: #1a1d21; --muted: #5c6470; --card: #ffffff;
+      --border: #e3e6ea; --accent: #d97416; --code-bg: #eef0f3;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg: #101318; --fg: #e8eaed; --muted: #9aa3ad; --card: #181c23;
+        --border: #262c35; --accent: #f09142; --code-bg: #1f242d;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--bg); color: var(--fg);
+      font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .wrap { max-width: 960px; margin: 0 auto; padding: 48px 16px 64px; }
+    h1 { font-size: 2.1rem; margin: 0 0 4px; letter-spacing: -0.5px; }
+    h1 .accent { color: var(--accent); }
+    .tagline { color: var(--muted); margin: 0 0 20px; font-size: 1.05rem; }
+    .badges { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 32px; }
+    .badges img { height: 20px; }
+    h2 { font-size: 1.25rem; margin: 40px 0 12px; }
+    .install-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+    .card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 10px; padding: 14px 16px;
+    }
+    .card h3 { margin: 0 0 8px; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+    pre {
+      margin: 0; padding: 10px 12px; background: var(--code-bg); border-radius: 8px;
+      overflow-x: auto; font: 13px/1.5 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    }
+    #demo-frame {
+      width: 100%; border: 1px solid var(--border); border-radius: 12px;
+      background: var(--card); min-height: 420px; display: block;
+    }
+    .demo-note { color: var(--muted); font-size: 0.85rem; margin-top: 8px; }
+    #demo-status { color: var(--muted); font-size: 0.9rem; padding: 12px 0; }
+    a { color: var(--accent); }
+    footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.9rem; }
+    footer ul { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 16px; margin: 0; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>meteo<span class="accent">-mcp-rs</span></h1>
+    <p class="tagline">
+      A fast, zero-API-key MCP server in Rust with an interactive
+      <strong>MCP App</strong> weather &amp; air-quality dashboard, powered by
+      <a href="https://open-meteo.com/" rel="noopener">Open-Meteo</a>.
+    </p>
+    <div class="badges">
+      <a href="https://github.com/gohyperdev/meteo-mcp-rs/actions/workflows/ci.yml"><img src="https://github.com/gohyperdev/meteo-mcp-rs/actions/workflows/ci.yml/badge.svg" alt="CI status" /></a>
+      <a href="https://crates.io/crates/meteo-mcp-rs"><img src="https://img.shields.io/crates/v/meteo-mcp-rs.svg" alt="crates.io version" /></a>
+      <a href="https://github.com/gohyperdev/meteo-mcp-rs/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="MIT license" /></a>
+    </div>
+
+    <h2>Live demo</h2>
+    <p>
+      This is the <em>actual</em> <code>ui/dashboard.html</code> served by the MCP server, loaded
+      straight from the repository. This page plays the role of an MCP Apps host: it answers
+      <code>ui/initialize</code> and serves the widget's <code>tools/call</code> requests by querying
+      the Open-Meteo APIs directly from your browser — the same requests the Rust server makes.
+      Try the search box, the preset pills, and the refresh button.
+    </p>
+    <div id="demo-status">Loading dashboard from the repository…</div>
+    <iframe id="demo-frame" title="meteo-mcp-rs interactive dashboard demo" sandbox="allow-scripts allow-same-origin" style="display:none"></iframe>
+    <p class="demo-note">
+      Inside Claude (or any MCP Apps–capable host) the dashboard is rendered from the
+      <code>ui://meteo/dashboard</code> resource and the host proxies tool calls to the
+      <code>meteo-mcp-rs</code> binary over stdio.
+    </p>
+
+    <h2>Install</h2>
+    <div class="install-grid">
+      <div class="card">
+        <h3>Homebrew (macOS / Linux)</h3>
+        <pre>brew install gohyperdev/tap/meteo-mcp-rs</pre>
+      </div>
+      <div class="card">
+        <h3>cargo-binstall (prebuilt)</h3>
+        <pre>cargo binstall meteo-mcp-rs</pre>
+      </div>
+      <div class="card">
+        <h3>Cargo (from source)</h3>
+        <pre>cargo install meteo-mcp-rs</pre>
+      </div>
+      <div class="card">
+        <h3>Prebuilt archives</h3>
+        <pre>github.com/gohyperdev/meteo-mcp-rs/releases</pre>
+      </div>
+    </div>
+
+    <h2>Configure in Claude Desktop</h2>
+    <pre>{
+  "mcpServers": {
+    "meteo": { "command": "/opt/homebrew/opt/meteo-mcp-rs/bin/meteo-mcp-rs" }
+  }
+}</pre>
+
+    <footer>
+      <ul>
+        <li><a href="https://github.com/gohyperdev/meteo-mcp-rs">GitHub</a></li>
+        <li><a href="https://crates.io/crates/meteo-mcp-rs">crates.io</a></li>
+        <li><a href="https://registry.modelcontextprotocol.io/v0/servers?search=meteo-mcp-rs">MCP Registry</a></li>
+        <li>Weather data by <a href="https://open-meteo.com/" rel="noopener">Open-Meteo</a> (CC BY 4.0)</li>
+      </ul>
+    </footer>
+  </div>
+
+  <script>
+    (() => {
+      const DASHBOARD_URL = "https://raw.githubusercontent.com/gohyperdev/meteo-mcp-rs/main/ui/dashboard.html";
+      const GEO = "https://geocoding-api.open-meteo.com/v1/search";
+      const FORECAST = "https://api.open-meteo.com/v1/forecast";
+      const AQI = "https://air-quality-api.open-meteo.com/v1/air-quality";
+      const frame = document.getElementById("demo-frame");
+      const statusEl = document.getElementById("demo-status");
+
+      const theme = () => (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+
+      // --- Open-Meteo client: mirrors src/open_meteo.rs ---------------------
+      async function getJson(url, params) {
+        const u = new URL(url);
+        for (const [k, v] of Object.entries(params)) u.searchParams.set(k, v);
+        const res = await fetch(u);
+        if (!res.ok) throw new Error(`Open-Meteo HTTP ${res.status}`);
+        return res.json();
+      }
+
+      async function geocode(city) {
+        const data = await getJson(GEO, { name: city, count: 1, language: "en", format: "json" });
+        const loc = data.results?.[0];
+        if (!loc) throw new Error(`Location not found: ${city}`);
+        return {
+          name: loc.name, country: loc.country ?? null,
+          latitude: loc.latitude, longitude: loc.longitude,
+          timezone: loc.timezone ?? null,
+        };
+      }
+
+      async function reportByCoords(location) {
+        const common = { latitude: location.latitude, longitude: location.longitude };
+        const [weather, aqi] = await Promise.all([
+          getJson(FORECAST, {
+            ...common,
+            current: "temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,surface_pressure,precipitation",
+            hourly: "temperature_2m,precipitation_probability,weather_code",
+            daily: "weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,uv_index_max",
+            timezone: "auto", forecast_days: 7,
+          }),
+          getJson(AQI, { ...common, current: "european_aqi,pm10,pm2_5" }).catch(() => null),
+        ]);
+        return {
+          location,
+          current: weather.current, hourly: weather.hourly, daily: weather.daily,
+          air_quality: aqi ? aqi.current : null,
+        };
+      }
+
+      async function callTool(name, args) {
+        if (name === "get_weather_dashboard") {
+          return reportByCoords(await geocode(String(args?.city ?? "Warsaw")));
+        }
+        if (name === "refresh_by_coords") {
+          return reportByCoords({
+            name: String(args?.name ?? "Unknown"), country: null,
+            latitude: Number(args?.latitude), longitude: Number(args?.longitude),
+            timezone: null,
+          });
+        }
+        throw new Error(`Unknown tool: ${name}`);
+      }
+
+      // --- Minimal MCP Apps host: answers the widget's JSON-RPC ------------
+      const post = (msg) => frame.contentWindow?.postMessage(msg, "*");
+      const respond = (id, result) => post({ jsonrpc: "2.0", id, result });
+      const respondErr = (id, message) => post({ jsonrpc: "2.0", id, error: { code: -32000, message } });
+
+      window.addEventListener("message", async (event) => {
+        if (event.source !== frame.contentWindow) return;
+        const msg = event.data;
+        if (!msg || msg.jsonrpc !== "2.0" || !msg.method) return;
+
+        if (msg.method === "ui/initialize") {
+          respond(msg.id, {
+            protocolVersion: "2026-01-26",
+            hostInfo: { name: "github-pages-demo", version: "1.0.0" },
+            hostContext: { theme: theme(), displayMode: "inline", availableDisplayModes: ["inline"] },
+          });
+        } else if (msg.method === "ui/notifications/initialized") {
+          // Widget is ready: push the first report, like a host forwarding
+          // the get_weather_dashboard result that opened the app.
+          try {
+            const report = await callTool("get_weather_dashboard", { city: "Warsaw" });
+            post({ jsonrpc: "2.0", method: "ui/notifications/tool-result", params: { structuredContent: report } });
+          } catch (e) { console.warn("initial load failed:", e); }
+        } else if (msg.method === "tools/call") {
+          try {
+            respond(msg.id, { structuredContent: await callTool(msg.params?.name, msg.params?.arguments) });
+          } catch (e) {
+            respondErr(msg.id, e?.message || "Tool call failed");
+          }
+        } else if (msg.method === "ui/request-display-mode") {
+          respond(msg.id, { mode: "inline" });
+        } else if (msg.method === "ui/notifications/size-changed") {
+          const h = Number(msg.params?.height);
+          if (Number.isFinite(h) && h > 0) frame.style.height = Math.min(Math.max(h, 420), 1600) + "px";
+        }
+      });
+
+      matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+        post({ jsonrpc: "2.0", method: "ui/notifications/host-context-changed", params: { theme: theme() } });
+      });
+
+      // --- Boot: fetch the real widget HTML from the repo -------------------
+      (async () => {
+        try {
+          const res = await fetch(DASHBOARD_URL);
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          frame.srcdoc = await res.text();
+          frame.style.display = "block";
+          statusEl.style.display = "none";
+        } catch (e) {
+          statusEl.textContent = "Could not load the dashboard from the repository (" + (e?.message || e) + "). See the GitHub README for screenshots.";
+        }
+      })();
+    })();
+  </script>
+</body>
+</html>

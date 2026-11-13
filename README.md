@@ -6,6 +6,8 @@
 
 A fast, zero-API-key **Model Context Protocol (MCP)** weather server written in **Rust**, featuring an interactive **MCP App** (`ui://meteo/dashboard`) powered by the [Open-Meteo](https://open-meteo.com/) API.
 
+**[▶ Live demo](https://gohyperdev.github.io/meteo-mcp-rs/)** — the real dashboard running in your browser against live Open-Meteo data.
+
 Ask Claude (or any MCP Apps–capable host) for the weather and get an interactive dashboard with current telemetry, European Air Quality Index (PM2.5/PM10), a 24-hour temperature & precipitation chart, and a 7-day forecast — rendered directly inside the conversation with zero API keys or external Node/Python runtimes.
 
 ## Features
@@ -39,7 +41,13 @@ Ask Claude (or any MCP Apps–capable host) for the weather and get an interacti
 
 ## Quick Start
 
-### Download prebuilt binaries (recommended)
+### Homebrew (macOS / Linux)
+
+```bash
+brew install gohyperdev/tap/meteo-mcp-rs
+```
+
+### Download prebuilt binaries
 
 Grab the latest archive for your platform from [GitHub Releases](https://github.com/gohyperdev/meteo-mcp-rs/releases/latest) (each release also includes `SHA256SUMS.txt`):
 
@@ -158,6 +166,8 @@ RUST_LOG=meteo_mcp_rs=debug cargo run
 - [GitHub Releases](https://github.com/gohyperdev/meteo-mcp-rs/releases) — prebuilt binaries + `SHA256SUMS.txt`
 - [crates.io](https://crates.io/crates/meteo-mcp-rs)
 - MCP Registry name: `mcp-name: io.github.gohyperdev/meteo-mcp-rs`
+- [Homebrew tap](https://github.com/gohyperdev/homebrew-tap)
+- [Live demo (GitHub Pages)](https://gohyperdev.github.io/meteo-mcp-rs/)
 
 ## License
 
