@@ -1,0 +1,25 @@
+[package]
+name = "meteo-mcp-rs"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.88"
+description = "Native Rust MCP server for Open-Meteo with an interactive MCP App dashboard (weather + EU AQI)"
+license = "MIT"
+repository = "https://github.com/gohyperdev/meteo-mcp-rs"
+homepage = "https://github.com/gohyperdev/meteo-mcp-rs"
+keywords = ["mcp", "mcp-apps", "weather", "open-meteo", "rust"]
+categories = ["command-line-utilities", "web-programming::http-client"]
+
+[dependencies]
+rmcp = { version = "3.10", features = ["server", "macros", "schemars", "transport-io"] }
+tokio = { version = "1", features = ["full"] }
+reqwest = { version = "0.13", features = ["json", "query", "rustls"], default-features = false }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+schemars = "1"
+anyhow = "1"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+[dev-dependencies]
+rmcp = { version = "3.10", features = ["client"] }
