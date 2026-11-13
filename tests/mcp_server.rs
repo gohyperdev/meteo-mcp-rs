@@ -38,6 +38,21 @@ async fn spawn_mock_open_meteo() -> String {
                     .nth(1)
                     .unwrap_or("/");
 
+                // Mirror the real API: `current` echoes back ONLY the fields the
+                // server actually requested in the query string. A mock that
+                // unconditionally returns every field hides missing request params.
+                let requested_current: Vec<String> = path
+                    .split_once('?')
+                    .map(|(_, q)| q)
+                    .unwrap_or("")
+                    .split('&')
+                    .find_map(|kv| kv.strip_prefix("current="))
+                    .unwrap_or("")
+                    .replace("%2C", ",")
+                    .split(',')
+                    .map(str::to_string)
+                    .collect();
+
                 let body = if path.starts_with("/geo") {
                     json!({
                         "results": [{
@@ -50,16 +65,24 @@ async fn spawn_mock_open_meteo() -> String {
                     })
                     .to_string()
                 } else if path.starts_with("/forecast") {
+                    let full_current = json!({
+                        "temperature_2m": 16.4,
+                        "relative_humidity_2m": 72,
+                        "apparent_temperature": 15.8,
+                        "weather_code": 2,
+                        "wind_speed_10m": 18.2,
+                        "surface_pressure": 1012.4,
+                        "precipitation": 0.0
+                    });
+                    let current: serde_json::Map<String, serde_json::Value> = full_current
+                        .as_object()
+                        .unwrap()
+                        .iter()
+                        .filter(|(k, _)| requested_current.contains(k))
+                        .map(|(k, v)| (k.clone(), v.clone()))
+                        .collect();
                     json!({
-                        "current": {
-                            "temperature_2m": 16.4,
-                            "relative_humidity_2m": 72,
-                            "apparent_temperature": 15.8,
-                            "weather_code": 2,
-                            "wind_speed_10m": 18.2,
-                            "surface_pressure": 1012.4,
-                            "precipitation": 0.0
-                        },
+                        "current": current,
                         "hourly": {
                             "time": ["2026-08-18T12:00", "2026-08-18T13:00"],
                             "temperature_2m": [16.4, 17.1],
@@ -199,6 +222,9 @@ async fn mcp_server_exposes_tools_ui_resource_and_handles_calls() {
         .expect("structured_content should be set");
     assert_eq!(structured["location"]["name"], json!("Gdańsk"));
     assert_eq!(structured["current"]["temperature_2m"], json!(16.4));
+    // The dashboard UI renders `current.precipitation` unconditionally
+    // (ui/dashboard.html), so the server MUST request it from Open-Meteo.
+    assert_eq!(structured["current"]["precipitation"], json!(0.0));
     assert_eq!(structured["air_quality"]["european_aqi"], json!(14));
     assert_eq!(
         call_res.meta.as_ref().unwrap().0["ui"]["resourceUri"],

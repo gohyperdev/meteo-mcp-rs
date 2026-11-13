@@ -782,7 +782,7 @@
                 </div>
                 <div>
                   <div class="metric-label">Precip</div>
-                  <div class="metric-val">${cur.precipitation.toFixed(1)} mm</div>
+                  <div class="metric-val">${cur.precipitation != null ? cur.precipitation.toFixed(1) + " mm" : "—"}</div>
                 </div>
               </div>
             </div>

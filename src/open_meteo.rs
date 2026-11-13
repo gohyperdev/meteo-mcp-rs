@@ -115,7 +115,7 @@ impl OpenMeteoClient {
                 ("longitude", lon.as_str()),
                 (
                     "current",
-                    "temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,surface_pressure",
+                    "temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,surface_pressure,precipitation",
                 ),
                 (
                     "hourly",
