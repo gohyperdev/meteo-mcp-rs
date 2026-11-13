@@ -5,10 +5,23 @@ edition = "2024"
 rust-version = "1.88"
 description = "Native Rust MCP server for Open-Meteo with an interactive MCP App dashboard (weather + EU AQI)"
 license = "MIT"
+readme = "README.md"
 repository = "https://github.com/gohyperdev/meteo-mcp-rs"
 homepage = "https://github.com/gohyperdev/meteo-mcp-rs"
 keywords = ["mcp", "mcp-apps", "weather", "open-meteo", "rust"]
 categories = ["command-line-utilities", "web-programming::http-client"]
+
+# cargo-binstall: install prebuilt binaries from GitHub Releases.
+# Release assets (release.yml): {name}-v{version}-{target}.tar.gz (zip on Windows),
+# with the binary nested in a {name}-v{version}-{target}/ directory inside the archive.
+[package.metadata.binstall]
+pkg-url = "{ repo }/releases/download/v{ version }/{ name }-v{ version }-{ target }.tar.gz"
+pkg-fmt = "tgz"
+bin-dir = "{ name }-v{ version }-{ target }/{ bin }{ binary-ext }"
+
+[package.metadata.binstall.overrides.x86_64-pc-windows-msvc]
+pkg-url = "{ repo }/releases/download/v{ version }/{ name }-v{ version }-{ target }.zip"
+pkg-fmt = "zip"
 
 [dependencies]
 rmcp = { version = "3.10", features = ["server", "macros", "schemars", "transport-io"] }

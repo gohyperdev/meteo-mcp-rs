@@ -1,0 +1,22 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.gohyperdev/meteo-mcp-rs",
+  "title": "Meteo",
+  "description": "Rust-native Open-Meteo MCP server with an interactive MCP App weather & air quality dashboard",
+  "version": "0.1.1",
+  "websiteUrl": "https://github.com/gohyperdev/meteo-mcp-rs",
+  "repository": {
+    "url": "https://github.com/gohyperdev/meteo-mcp-rs",
+    "source": "github"
+  },
+  "packages": [
+    {
+      "registryType": "cargo",
+      "identifier": "meteo-mcp-rs",
+      "version": "0.1.1",
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ]
+}

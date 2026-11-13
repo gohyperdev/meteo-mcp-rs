@@ -54,8 +54,8 @@ Grab the latest archive for your platform from [GitHub Releases](https://github.
 Example install on macOS / Linux (replace `<version>` & `<target>`):
 
 ```bash
-curl -fsSL "https://github.com/gohyperdev/meteo-mcp-rs/releases/latest/download/meteo-mcp-rs-v0.1.0-aarch64-apple-darwin.tar.gz" | tar -xz
-sudo mv meteo-mcp-rs-v0.1.0-aarch64-apple-darwin/meteo-mcp-rs /usr/local/bin/
+curl -fsSL "https://github.com/gohyperdev/meteo-mcp-rs/releases/latest/download/meteo-mcp-rs-v0.1.1-aarch64-apple-darwin.tar.gz" | tar -xz
+sudo mv meteo-mcp-rs-v0.1.1-aarch64-apple-darwin/meteo-mcp-rs /usr/local/bin/
 ```
 
 On macOS, if Gatekeeper blocks an unsigned downloaded binary:
@@ -77,6 +77,20 @@ cargo build --release
 The binary is compiled to `target/release/meteo-mcp-rs`.
 
 ### Install via Cargo
+
+From [crates.io](https://crates.io/crates/meteo-mcp-rs) (compiles from source, requires the Rust toolchain):
+
+```bash
+cargo install meteo-mcp-rs
+```
+
+With [cargo-binstall](https://github.com/cargo-bins/cargo-binstall) (downloads the prebuilt binary from GitHub Releases, no compilation):
+
+```bash
+cargo binstall meteo-mcp-rs
+```
+
+Or straight from the repository:
 
 ```bash
 cargo install --git https://github.com/gohyperdev/meteo-mcp-rs
@@ -138,6 +152,12 @@ cargo test
 # Run with debug logs (written to stderr; stdout stays reserved for MCP JSON-RPC)
 RUST_LOG=meteo_mcp_rs=debug cargo run
 ```
+
+## Links
+
+- [GitHub Releases](https://github.com/gohyperdev/meteo-mcp-rs/releases) — prebuilt binaries + `SHA256SUMS.txt`
+- [crates.io](https://crates.io/crates/meteo-mcp-rs)
+- MCP Registry name: `mcp-name: io.github.gohyperdev/meteo-mcp-rs`
 
 ## License
 
