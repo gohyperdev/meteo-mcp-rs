@@ -11,8 +11,10 @@ on:
         required: false
         type: string
 
+# Least privilege: build jobs get read-only tokens; only the release job
+# can write release assets and mint provenance attestations.
 permissions:
-  contents: write
+  contents: read
 
 env:
   CARGO_TERM_COLOR: always
@@ -43,26 +45,29 @@ jobs:
             archive: zip
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable 2026-11
         with:
           targets: ${{ matrix.target }}
 
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
         with:
           key: release-${{ matrix.target }}
 
       - name: Build release binary
         env:
           AWS_LC_SYS_PREBUILT_NASM: "1"
-        run: cargo build --release --target ${{ matrix.target }}
+        run: cargo build --release --locked --target ${{ matrix.target }}
 
       - name: Package Unix archive
         if: matrix.archive == 'tar.gz'
         shell: bash
+        env:
+          TAG: ${{ inputs.tag || github.ref_name }}
         run: |
-          TAG="${{ inputs.tag || github.ref_name }}"
           OUT_DIR="dist"
           STAGE="stage/${{ env.BIN_NAME }}-${TAG}-${{ matrix.target }}"
           mkdir -p "$OUT_DIR" "$STAGE"
@@ -73,9 +78,10 @@ jobs:
       - name: Package Windows archive
         if: matrix.archive == 'zip'
         shell: pwsh
+        env:
+          TAG: ${{ inputs.tag || github.ref_name }}
         run: |
-          $tag = "${{ inputs.tag || github.ref_name }}"
-          $name = "${{ env.BIN_NAME }}-$tag-${{ matrix.target }}"
+          $name = "${{ env.BIN_NAME }}-$env:TAG-${{ matrix.target }}"
           $stage = "stage/$name"
           New-Item -ItemType Directory -Force -Path "dist", $stage | Out-Null
           Copy-Item "target/${{ matrix.target }}/release/${{ env.BIN_NAME }}.exe" "$stage/"
@@ -83,7 +89,7 @@ jobs:
           Compress-Archive -Path "$stage" -DestinationPath "dist/$name.zip" -Force
 
       - name: Upload build artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: ${{ env.BIN_NAME }}-${{ matrix.target }}
           path: dist/*
@@ -93,9 +99,13 @@ jobs:
     needs: build
     if: startsWith(github.ref, 'refs/tags/v') || inputs.tag != ''
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # upload release assets
+      id-token: write # SLSA provenance (attest-build-provenance)
+      attestations: write
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           path: artifacts
           merge-multiple: true
@@ -107,8 +117,15 @@ jobs:
           sha256sum *.tar.gz *.zip > SHA256SUMS.txt
           cat SHA256SUMS.txt
 
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3
+        with:
+          subject-path: |
+            artifacts/*.tar.gz
+            artifacts/*.zip
+
       - name: Publish Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
           tag_name: ${{ inputs.tag || github.ref_name }}
           generate_release_notes: true

@@ -86,10 +86,10 @@ The binary is compiled to `target/release/meteo-mcp-rs`.
 
 ### Install via Cargo
 
-From [crates.io](https://crates.io/crates/meteo-mcp-rs) (compiles from source, requires the Rust toolchain):
+From [crates.io](https://crates.io/crates/meteo-mcp-rs) (compiles from source, requires the Rust toolchain; `--locked` builds with the exact dependency versions the release was tested against):
 
 ```bash
-cargo install meteo-mcp-rs
+cargo install --locked meteo-mcp-rs
 ```
 
 With [cargo-binstall](https://github.com/cargo-bins/cargo-binstall) (downloads the prebuilt binary from GitHub Releases, no compilation):

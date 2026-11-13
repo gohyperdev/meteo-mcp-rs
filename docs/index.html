@@ -72,7 +72,10 @@
       Try the search box, the preset pills, and the refresh button.
     </p>
     <div id="demo-status">Loading dashboard from the repository…</div>
-    <iframe id="demo-frame" title="meteo-mcp-rs interactive dashboard demo" sandbox="allow-scripts allow-same-origin" style="display:none"></iframe>
+    <!-- sandbox deliberately OMITS allow-same-origin: with srcdoc the widget
+         then runs in an opaque origin, isolated from this page and the
+         *.github.io origin; the postMessage bridge below still works. -->
+    <iframe id="demo-frame" title="meteo-mcp-rs interactive dashboard demo" sandbox="allow-scripts" style="display:none"></iframe>
     <p class="demo-note">
       Inside Claude (or any MCP Apps–capable host) the dashboard is rendered from the
       <code>ui://meteo/dashboard</code> resource and the host proxies tool calls to the
@@ -118,7 +121,10 @@
 
   <script>
     (() => {
-      const DASHBOARD_URL = "https://raw.githubusercontent.com/gohyperdev/meteo-mcp-rs/main/ui/dashboard.html";
+      // Pinned to an immutable commit SHA (not `main`) so a push cannot
+      // silently change the code this page executes; bump on release.
+      const DASHBOARD_REV = "11fa709656c2b6b48526bb8fac8c6c7c94aa62e2";
+      const DASHBOARD_URL = `https://raw.githubusercontent.com/gohyperdev/meteo-mcp-rs/${DASHBOARD_REV}/ui/dashboard.html`;
       const GEO = "https://geocoding-api.open-meteo.com/v1/search";
       const FORECAST = "https://api.open-meteo.com/v1/forecast";
       const AQI = "https://air-quality-api.open-meteo.com/v1/air-quality";
